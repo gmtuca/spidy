@@ -23,7 +23,7 @@ class SpidyTest extends Specification {
 
             def spidy = new Spidey(Mock(WebConnector){
                 1 * get(root) >> "<html><a href='${firstLink}'>First</a></html>"
-                get(firstLink) >> "<html></html>"
+                1 * get(firstLink) >> "<html></html>"
             })
         when:
             def page = spidy.crawl(root)
@@ -31,6 +31,29 @@ class SpidyTest extends Specification {
             new Page(root, [
                     new Page(firstLink, [])
             ]) == page
+    }
+
+    def "Page with two links"() {
+        given:
+        def root = "index.html"
+        def firstLink = "first.html"
+        def secondLink = "second.html"
+
+        def spidy = new Spidey(Mock(WebConnector){
+            1 * get(root) >> "<html>" +
+                    "<a href='${firstLink}'>First</a>" +
+                    "<a href='${secondLink}'>Second</a>" +
+                    "</html>"
+            1 * get(firstLink) >> "<html></html>"
+            1 * get(secondLink) >> "<html></html>"
+        })
+        when:
+        def page = spidy.crawl(root)
+        then:
+        new Page(root, [
+                new Page(firstLink, []),
+                new Page(secondLink, [])
+        ]) == page
     }
 
 }

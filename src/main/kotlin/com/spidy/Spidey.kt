@@ -11,7 +11,9 @@ class Spidey(private val connector: WebConnector = WebConnectorImpl()) {
     infix fun crawl(url: String): Page {
         return Page(url,
             linkNavigator.links(url)
-                .map { Page(it) })
+                .map { crawl(it) }
+
+        )
     }
 
 }
