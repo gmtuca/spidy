@@ -16,11 +16,17 @@ class Spidey(connector: WebConnector = WebConnectorImpl(),
 
     private val linkNavigator : LinkNavigator = LinkNavigatorImpl(connector)
 
-    infix fun crawl(url: String): Page {
-        return Page(url,
-            linkNavigator.links(url)
-                .filter { linkFilter(it) }
-                .map { crawl(it) }
+    infix fun crawl(url: String) : Page {
+        return crawl(url, mutableSetOf())
+    }
+
+    private fun crawl(url: String, linksVisited : MutableSet<String>) : Page =
+        if(!linksVisited.add(url)) {
+            Page(url = url, cyclic = true)
+        } else {
+            Page(url, linkNavigator.links(url)
+                                   .filter { linkFilter(it) }
+                                   .map { crawl(it, linksVisited) }
 
         )
     }
