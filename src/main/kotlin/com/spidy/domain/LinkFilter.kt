@@ -11,3 +11,7 @@ class SubdomainFilter(domain : String) : LinkFilter {
     override fun invoke(url: String): Boolean = pattern.matcher(url).matches()
 
 }
+
+class VisitAllFilter : LinkFilter {
+    override fun invoke(url: String) = true
+}

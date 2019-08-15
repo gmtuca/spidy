@@ -1,7 +1,6 @@
 package com.spidy
 
 import com.spidy.domain.Page
-import com.spidy.domain.SubdomainFilter
 import com.spidy.service.WebConnector
 import spock.lang.Specification
 
@@ -11,9 +10,9 @@ class SpidyTest extends Specification {
         given:
             def root = "index.html"
 
-            def spidy = new Spidey(Mock(WebConnector){
+            def spidy = new Spidy(Mock(WebConnector){
                 1 * get(root) >> "<html></html>"
-            }, {true})
+            }, false)
         when:
             def page = spidy.crawl(root)
         then:
@@ -25,10 +24,10 @@ class SpidyTest extends Specification {
             def root = "index.html"
             def firstLink = "first.html"
 
-            def spidy = new Spidey(Mock(WebConnector){
+            def spidy = new Spidy(Mock(WebConnector){
                 1 * get(root) >> "<html><a href='${firstLink}'>First</a></html>"
                 1 * get(firstLink) >> "<html></html>"
-            }, {true})
+            }, false)
         when:
             def page = spidy.crawl(root)
         then:
@@ -43,14 +42,14 @@ class SpidyTest extends Specification {
         def firstLink = "first.html"
         def secondLink = "second.html"
 
-        def spidy = new Spidey(Mock(WebConnector){
+        def spidy = new Spidy(Mock(WebConnector){
             1 * get(root) >> "<html>" +
                         "<b>Here is a link: <a href='${firstLink}'>First</a></b>" +
                         "<p>Here is another link: <a href='${secondLink}'>Second</a></b>" +
                     "</html>"
             1 * get(firstLink) >> "<html></html>"
             1 * get(secondLink) >> "<html></html>"
-        }, {true})
+        }, false)
         when:
         def page = spidy.crawl(root)
         then:
@@ -66,11 +65,11 @@ class SpidyTest extends Specification {
         def firstLink = "first.html"
         def firstFollowUpLink = "followup1.com"
 
-        def spidy = new Spidey(Mock(WebConnector){
+        def spidy = new Spidy(Mock(WebConnector){
             1 * get(root) >> "<html><a href='${firstLink}'>First</a></html>"
             1 * get(firstLink) >> "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>"
             1 * get(firstFollowUpLink) >> "<html></html>"
-        }, {true})
+        }, false)
         when:
         def page = spidy.crawl(root)
         then:
@@ -92,7 +91,7 @@ class SpidyTest extends Specification {
         def secondFollowUpLink1 = "followup2-1.com"
         def secondFollowUpLink2 = "followup2-2.com"
 
-        def spidey = new Spidey(Mock(WebConnector){
+        def spidey = new Spidy(Mock(WebConnector){
             1 * get(root) >> "<html>" +
                                 "<a href='${firstLink}'>Test 1</a>" +
                                 "<a href='${secondLink}'>Test 2</a>" +
@@ -105,7 +104,7 @@ class SpidyTest extends Specification {
                             "</html>"
             1 * get(secondFollowUpLink1) >> "<html></html>"
             1 * get(secondFollowUpLink2) >> "<html></html>"
-        }, {true})
+        }, false)
         when:
         def page = spidey.crawl(root)
         then:
@@ -128,7 +127,7 @@ class SpidyTest extends Specification {
         def secondLink = "example.com/second"
         def thirdLink = "https://google.com"
 
-        def spidy = new Spidey(Mock(WebConnector){
+        def spidy = new Spidy(Mock(WebConnector){
             1 * get(root) >> "<html>" +
                     "<a href='${firstLink}'>First</a>" +
                     "<a href='${secondLink}'>Second</a>" +
@@ -137,7 +136,7 @@ class SpidyTest extends Specification {
             1 * get(firstLink) >> "<html></html>"
             1 * get(secondLink) >> "<html></html>"
             0 * get(thirdLink)
-        }, new SubdomainFilter("example.com"))
+        }, true)
         when:
         def page = spidy.crawl(root)
         then:
@@ -151,9 +150,9 @@ class SpidyTest extends Specification {
         given:
         def root = "index.html"
 
-        def spidy = new Spidey(Mock(WebConnector){
+        def spidy = new Spidy(Mock(WebConnector){
             1 * get(root) >> "<html><a href='${root}'>Back to root!</a></html>"
-        }, {true})
+        }, false)
         when:
         def page = spidy.crawl(root)
         then:
@@ -168,11 +167,11 @@ class SpidyTest extends Specification {
         def firstLink = "test1.com"
         def firstFollowUpLink = "followup1.com"
 
-        def spidy = new Spidey(Mock(WebConnector){
+        def spidy = new Spidy(Mock(WebConnector){
             1 * get(root) >> "<html><a href='${firstLink}'>Test 1</a></html>"
             1 * get(firstLink) >> "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>"
             1 * get(firstFollowUpLink) >> "<html><a href='${root}'>Follow-up 1</a></html>"
-        }, {true})
+        }, false)
 
         when:
         def page = spidy.crawl(root)
