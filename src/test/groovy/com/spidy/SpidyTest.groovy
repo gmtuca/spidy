@@ -1,4 +1,8 @@
 package com.spidy
+
+import com.spidy.domain.Page
+import com.spidy.domain.SubdomainFilter
+import com.spidy.service.WebConnector
 import spock.lang.Specification
 
 class SpidyTest extends Specification {

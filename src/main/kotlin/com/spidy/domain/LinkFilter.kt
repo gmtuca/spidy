@@ -1,4 +1,4 @@
-package com.spidy
+package com.spidy.domain
 
 import java.util.regex.Pattern
 

@@ -1,4 +1,4 @@
-package com.spidy
+package com.spidy.domain
 
 data class Page(
     val url : String,

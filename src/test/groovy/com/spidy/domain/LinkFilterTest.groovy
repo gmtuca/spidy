@@ -1,4 +1,6 @@
-package com.spidy
+package com.spidy.domain
+
+import com.spidy.domain.SubdomainFilter
 import spock.lang.Specification
 
 class LinkFilterTest extends Specification {

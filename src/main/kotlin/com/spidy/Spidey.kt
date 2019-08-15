@@ -1,5 +1,12 @@
 package com.spidy
 
+import com.spidy.domain.LinkFilter
+import com.spidy.domain.Page
+import com.spidy.service.LinkNavigator
+import com.spidy.service.LinkNavigatorImpl
+import com.spidy.service.WebConnector
+import com.spidy.service.WebConnectorImpl
+
 fun main() {
     println(Spidey() crawl "http://www.example.com")
 }

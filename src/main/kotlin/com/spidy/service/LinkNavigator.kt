@@ -1,4 +1,4 @@
-package com.spidy
+package com.spidy.service
 
 import org.jsoup.Jsoup
 

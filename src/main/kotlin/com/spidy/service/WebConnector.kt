@@ -1,4 +1,4 @@
-package com.spidy
+package com.spidy.service
 
 interface WebConnector {
     fun get(url : String) : String
