@@ -77,4 +77,43 @@ class SpidyTest extends Specification {
         ]) == page
     }
 
+    def "Page with 2 links, depth 3"() {
+        given:
+        def root = "index.html"
+
+        def firstLink = "test1.com"
+        def firstFollowUpLink = "followup1.com"
+
+        def secondLink = "test2.com"
+        def secondFollowUpLink1 = "followup2-1.com"
+        def secondFollowUpLink2 = "followup2-2.com"
+
+        def spidey = new Spidey(Mock(WebConnector){
+            1 * get(root) >> "<html>" +
+                                "<a href='${firstLink}'>Test 1</a>" +
+                                "<a href='${secondLink}'>Test 2</a>" +
+                            "</html>"
+            1 * get(firstLink) >> "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>"
+            1 * get(firstFollowUpLink) >> "<html></html>"
+            1 * get(secondLink) >> "<html>" +
+                                "<a href='${secondFollowUpLink1}'>Follow-up 2-1</a>" +
+                                "<a href='${secondFollowUpLink2}'>Follow-up 2-2</a>" +
+                            "</html>"
+            1 * get(secondFollowUpLink1) >> "<html></html>"
+            1 * get(secondFollowUpLink2) >> "<html></html>"
+        })
+        when:
+        def page = spidey.crawl(root)
+        then:
+        new Page(root, [
+                new Page(firstLink, [
+                        new Page(firstFollowUpLink, [])
+                ]),
+                new Page(secondLink, [
+                        new Page(secondFollowUpLink1, []),
+                        new Page(secondFollowUpLink2, [])
+                ]),
+        ]) == page
+    }
+
 }
