@@ -9,7 +9,7 @@ class SpidyTest extends Specification {
 
             def spidy = new Spidey(Mock(WebConnector){
                 1 * get(root) >> "<html></html>"
-            })
+            }, {true})
         when:
             def page = spidy.crawl(root)
         then:
@@ -24,7 +24,7 @@ class SpidyTest extends Specification {
             def spidy = new Spidey(Mock(WebConnector){
                 1 * get(root) >> "<html><a href='${firstLink}'>First</a></html>"
                 1 * get(firstLink) >> "<html></html>"
-            })
+            }, {true})
         when:
             def page = spidy.crawl(root)
         then:
@@ -46,7 +46,7 @@ class SpidyTest extends Specification {
                     "</html>"
             1 * get(firstLink) >> "<html></html>"
             1 * get(secondLink) >> "<html></html>"
-        })
+        }, {true})
         when:
         def page = spidy.crawl(root)
         then:
@@ -54,6 +54,32 @@ class SpidyTest extends Specification {
                 new Page(firstLink, []),
                 new Page(secondLink, [])
         ]) == page
+    }
+
+    def "Page with three links, depth 1, applying subdomain filter"() {
+        given:
+            def root = "example.com"
+            def firstLink = "/first"
+            def secondLink = "example.com/second"
+            def thirdLink = "https://google.com"
+
+        def spidy = new Spidey(Mock(WebConnector){
+            1 * get(root) >> "<html>" +
+                        "<a href='${firstLink}'>First</a>" +
+                        "<a href='${secondLink}'>Second</a>" +
+                        "<a href='${thirdLink}'>Third</a>" +
+                    "</html>"
+            1 * get(firstLink) >> "<html></html>"
+            1 * get(secondLink) >> "<html></html>"
+            0 * get(thirdLink)
+        }, new SubdomainFilter("example.com"))
+        when:
+            def page = spidy.crawl(root)
+        then:
+            new Page(root, [
+                    new Page(firstLink, []),
+                    new Page(secondLink, [])
+            ]) == page
     }
 
     def "Page with one link, depth 2"() {
@@ -66,7 +92,7 @@ class SpidyTest extends Specification {
             1 * get(root) >> "<html><a href='${firstLink}'>First</a></html>"
             1 * get(firstLink) >> "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>"
             1 * get(firstFollowUpLink) >> "<html></html>"
-        })
+        }, {true})
         when:
         def page = spidy.crawl(root)
         then:
@@ -101,7 +127,7 @@ class SpidyTest extends Specification {
                             "</html>"
             1 * get(secondFollowUpLink1) >> "<html></html>"
             1 * get(secondFollowUpLink2) >> "<html></html>"
-        })
+        }, {true})
         when:
         def page = spidey.crawl(root)
         then:
