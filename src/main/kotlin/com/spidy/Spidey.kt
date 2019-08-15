@@ -6,8 +6,12 @@ fun main() {
 
 class Spidey(private val connector: WebConnector = WebConnectorImpl()) {
 
+    private val linkNavigator : LinkNavigator = LinkNavigatorImpl(connector)
+
     infix fun crawl(url: String): Page {
-        return Page()
+        return Page(url,
+            linkNavigator.links(url)
+                .map { Page(it) })
     }
 
 }
