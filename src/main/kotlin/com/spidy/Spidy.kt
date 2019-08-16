@@ -10,14 +10,14 @@ import com.spidy.service.WebConnector
 import com.spidy.service.WebConnectorImpl
 
 fun main() {
-    println(
-        Spidy() crawl "monzo.com")
+    println(WebConnectorImpl().get("monzo.com"))
+    //println(Spidy() crawl "https://en.wikipedia.org")
 }
 
-class Spidy(connector: WebConnector = WebConnectorImpl(),
+class Spidy(private val connector: WebConnector = WebConnectorImpl(),
             private val withinDomain: Boolean = true) {
 
-    private val linkNavigator : LinkNavigator = LinkNavigatorImpl(connector)
+    private val linkNavigator : LinkNavigator = LinkNavigatorImpl()
 
     infix fun crawl(url: String) : Page {
         val linkFilter : LinkFilter =
@@ -31,13 +31,18 @@ class Spidy(connector: WebConnector = WebConnectorImpl(),
                       linkFilter: LinkFilter,
                       linksVisited : MutableSet<String>) : Page =
         if(!linksVisited.add(url)) {
-            Page(url = url, cyclic = true)
+            Page(url = url, status = 0, cyclic = true)
         } else {
-            Page(url, linkNavigator.links(url)
-                                   .filter { linkFilter(it) }
-                                   .map { crawl(it, linkFilter, linksVisited) }
+            val (status : Int, body : String) = connector.get(url)
 
-        )
-    }
+            val links = linkNavigator.links(body)
+                .filter { linkFilter(it) }
+                .map { crawl(it, linkFilter, linksVisited) }
 
+            Page(
+                url = url,
+                status = status,
+                links = links
+            )
+        }
 }

@@ -2,6 +2,7 @@ package com.spidy
 
 import com.spidy.domain.Page
 import com.spidy.service.WebConnector
+import kotlin.Pair
 import spock.lang.Specification
 
 class SpidyTest extends Specification {
@@ -11,12 +12,12 @@ class SpidyTest extends Specification {
             def root = "index.html"
 
             def spidy = new Spidy(Mock(WebConnector){
-                1 * get(root) >> "<html></html>"
+                1 * get(root) >> new Pair(200, "<html></html>")
             }, false)
         when:
             def page = spidy.crawl(root)
         then:
-            new Page(root, [], false) == page
+            new Page(root, 200, [], false) == page
     }
 
     def "Page with one link, depth 1"() {
@@ -25,14 +26,14 @@ class SpidyTest extends Specification {
             def firstLink = "first.html"
 
             def spidy = new Spidy(Mock(WebConnector){
-                1 * get(root) >> "<html><a href='${firstLink}'>First</a></html>"
-                1 * get(firstLink) >> "<html></html>"
+                1 * get(root) >> new Pair(200, "<html><a href='${firstLink}'>First</a></html>".toString())
+                1 * get(firstLink) >> new Pair(200,"<html></html>".toString())
             }, false)
         when:
             def page = spidy.crawl(root)
         then:
-            new Page(root, [
-                    Page.empty(firstLink)
+            new Page(root, 200, [
+                    Page.leaf(firstLink, 200)
             ], false) == page
     }
 
@@ -43,19 +44,19 @@ class SpidyTest extends Specification {
         def secondLink = "second.html"
 
         def spidy = new Spidy(Mock(WebConnector){
-            1 * get(root) >> "<html>" +
+            1 * get(root) >> new Pair(200, "<html>" +
                         "<b>Here is a link: <a href='${firstLink}'>First</a></b>" +
                         "<p>Here is another link: <a href='${secondLink}'>Second</a></b>" +
-                    "</html>"
-            1 * get(firstLink) >> "<html></html>"
-            1 * get(secondLink) >> "<html></html>"
+                    "</html>".toString())
+            1 * get(firstLink) >> new Pair(200,"<html></html>".toString())
+            1 * get(secondLink) >> new Pair(200,"<html></html>".toString())
         }, false)
         when:
         def page = spidy.crawl(root)
         then:
-        new Page(root, [
-                Page.empty(firstLink),
-                Page.empty(secondLink)
+        new Page(root, 200, [
+                Page.leaf(firstLink, 200),
+                Page.leaf(secondLink, 200)
         ], false) == page
     }
 
@@ -66,16 +67,16 @@ class SpidyTest extends Specification {
         def firstFollowUpLink = "followup1.com"
 
         def spidy = new Spidy(Mock(WebConnector){
-            1 * get(root) >> "<html><a href='${firstLink}'>First</a></html>"
-            1 * get(firstLink) >> "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>"
-            1 * get(firstFollowUpLink) >> "<html></html>"
+            1 * get(root) >> new Pair(200,"<html><a href='${firstLink}'>First</a></html>".toString())
+            1 * get(firstLink) >> new Pair(200,"<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>".toString())
+            1 * get(firstFollowUpLink) >> new Pair(200,"<html></html>".toString())
         }, false)
         when:
         def page = spidy.crawl(root)
         then:
-        new Page(root, [
-                new Page(firstLink, [
-                        Page.empty(firstFollowUpLink)
+        new Page(root, 200, [
+                new Page(firstLink, 200, [
+                        Page.leaf(firstFollowUpLink, 200)
                 ], false)
         ], false) == page
     }
@@ -92,29 +93,29 @@ class SpidyTest extends Specification {
         def secondFollowUpLink2 = "followup2-2.com"
 
         def spidey = new Spidy(Mock(WebConnector){
-            1 * get(root) >> "<html>" +
+            1 * get(root) >> new Pair(200,"<html>" +
                                 "<a href='${firstLink}'>Test 1</a>" +
                                 "<a href='${secondLink}'>Test 2</a>" +
-                            "</html>"
-            1 * get(firstLink) >> "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>"
-            1 * get(firstFollowUpLink) >> "<html></html>"
-            1 * get(secondLink) >> "<html>" +
+                            "</html>".toString())
+            1 * get(firstLink) >> new Pair(200,"<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>".toString())
+            1 * get(firstFollowUpLink) >> new Pair(200,"<html></html>".toString())
+            1 * get(secondLink) >> new Pair(200,"<html>" +
                                 "<a href='${secondFollowUpLink1}'>Follow-up 2-1</a>" +
                                 "<a href='${secondFollowUpLink2}'>Follow-up 2-2</a>" +
-                            "</html>"
-            1 * get(secondFollowUpLink1) >> "<html></html>"
-            1 * get(secondFollowUpLink2) >> "<html></html>"
+                            "</html>".toString())
+            1 * get(secondFollowUpLink1) >> new Pair(200,"<html></html>".toString())
+            1 * get(secondFollowUpLink2) >> new Pair(200,"<html></html>".toString())
         }, false)
         when:
         def page = spidey.crawl(root)
         then:
-        new Page(root, [
-                new Page(firstLink, [
-                        Page.empty(firstFollowUpLink)
+        new Page(root, 200, [
+                new Page(firstLink, 200, [
+                        Page.leaf(firstFollowUpLink, 200)
                 ], false),
-                new Page(secondLink, [
-                        Page.empty(secondFollowUpLink1),
-                        Page.empty(secondFollowUpLink2)
+                new Page(secondLink, 200, [
+                        Page.leaf(secondFollowUpLink1, 200),
+                        Page.leaf(secondFollowUpLink2, 200)
                 ], false),
         ], false) == page
     }
@@ -128,21 +129,69 @@ class SpidyTest extends Specification {
         def thirdLink = "https://google.com"
 
         def spidy = new Spidy(Mock(WebConnector){
-            1 * get(root) >> "<html>" +
+            1 * get(root) >> new Pair(200, "<html>" +
                     "<a href='${firstLink}'>First</a>" +
                     "<a href='${secondLink}'>Second</a>" +
                     "<a href='${thirdLink}'>Third</a>" +
-                    "</html>"
-            1 * get(firstLink) >> "<html></html>"
-            1 * get(secondLink) >> "<html></html>"
+                    "</html>".toString())
+            1 * get(firstLink) >> new Pair(200, "<html></html>".toString())
+            1 * get(secondLink) >> new Pair(200, "<html></html>".toString())
             0 * get(thirdLink)
         }, true)
         when:
         def page = spidy.crawl(root)
         then:
-        new Page(root, [
-                Page.empty(firstLink),
-                Page.empty(secondLink)
+        new Page(root, 200, [
+                Page.leaf(firstLink, 200),
+                Page.leaf(secondLink, 200)
+        ], false) == page
+    }
+
+    def "Page with three links, depth 1, different status codes"() {
+        given:
+        def root = "example.com"
+        def firstLink = "/not-found"
+        def secondLink = "/forbidden"
+        def thirdLink = "/moved-permanently"
+
+        def spidy = new Spidy(Mock(WebConnector){
+            1 * get(root) >> new Pair(200, "<html>" +
+                    "<a href='${firstLink}'>Not found</a>" +
+                    "<a href='${secondLink}'>Forbidden</a>" +
+                    "<a href='${thirdLink}'>Moved permanently</a>" +
+                    "</html>".toString())
+            1 * get(firstLink) >> new Pair(404, "<html><b>Not found</b></html>".toString())
+            1 * get(secondLink) >> new Pair(403, "<html><p>Forbidden</b></html>".toString())
+            1 * get(thirdLink) >> new Pair(301, "<html><p>Moved</b></html>".toString())
+        }, true)
+        when:
+        def page = spidy.crawl(root)
+        then:
+        new Page(root, 200, [
+                Page.leaf(firstLink, 404),
+                Page.leaf(secondLink, 403),
+                Page.leaf(thirdLink, 301)
+        ], false) == page
+    }
+
+    def "Page with one link, depth 1, follows non-2xx status codes"() {
+        given:
+        def root = "index.html"
+        def notFound = "/not-found"
+        def other = "/other"
+
+        def spidy = new Spidy(Mock(WebConnector){
+            1 * get(root) >> new Pair(200, "<html>Click <a href='${notFound}'>here</a></html>".toString())
+            1 * get(notFound) >> new Pair(404,"<html>Not found - go to <a href='${other}'>other</a></html>".toString())
+            1 * get(other) >> new Pair(200,"<html></html>".toString())
+        }, false)
+        when:
+        def page = spidy.crawl(root)
+        then:
+        new Page(root, 200, [
+                new Page(notFound, 404, [
+                        Page.leaf(other, 200)
+                ], false)
         ], false) == page
     }
 
@@ -151,13 +200,13 @@ class SpidyTest extends Specification {
         def root = "index.html"
 
         def spidy = new Spidy(Mock(WebConnector){
-            1 * get(root) >> "<html><a href='${root}'>Back to root!</a></html>"
+            1 * get(root) >> new Pair(200, "<html><a href='${root}'>Back to root!</a></html>".toString())
         }, false)
         when:
         def page = spidy.crawl(root)
         then:
-        new Page(root, [
-                new Page(root, [], true)
+        new Page(root, 200, [
+                new Page(root, 0, [], true)
         ], false) == page
     }
 
@@ -168,18 +217,18 @@ class SpidyTest extends Specification {
         def firstFollowUpLink = "followup1.com"
 
         def spidy = new Spidy(Mock(WebConnector){
-            1 * get(root) >> "<html><a href='${firstLink}'>Test 1</a></html>"
-            1 * get(firstLink) >> "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>"
-            1 * get(firstFollowUpLink) >> "<html><a href='${root}'>Follow-up 1</a></html>"
+            1 * get(root) >> new Pair(200, "<html><a href='${firstLink}'>Test 1</a></html>".toString())
+            1 * get(firstLink) >> new Pair(200, "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>".toString())
+            1 * get(firstFollowUpLink) >> new Pair(200, "<html><a href='${root}'>Follow-up 1</a></html>".toString())
         }, false)
 
         when:
         def page = spidy.crawl(root)
         then:
-        new Page(root, [
-                new Page(firstLink, [
-                        new Page(firstFollowUpLink, [
-                                new Page(root, [], true)
+        new Page(root, 200, [
+                new Page(firstLink, 200, [
+                        new Page(firstFollowUpLink, 200, [
+                                new Page(root, 0, [], true)
                         ], false)
                 ], false)
         ], false) == page
