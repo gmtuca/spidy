@@ -12,7 +12,7 @@ class SpidyTest extends Specification {
         given:
         def root = "root.com"
         when:
-        def page = SpidyKt.crawl(root, Mock(WebConnector) {
+        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html></html>")
         })
         then:
@@ -25,10 +25,10 @@ class SpidyTest extends Specification {
         def firstLink = "/first.html"
 
         when:
-        def page = SpidyKt.crawl(root, (Mock(WebConnector) {
+        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html><a href='${firstLink}'>First</a></html>".toString())
             1 * get(firstLink) >> new Pair(200, "<html></html>".toString())
-        }))
+        })
         then:
         new Page(200, "/", [
                 Page.leaf(200, firstLink)
@@ -42,14 +42,14 @@ class SpidyTest extends Specification {
         def secondLink = "/second.html"
 
         when:
-        def page = SpidyKt.crawl(root, (Mock(WebConnector) {
+        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html>" +
                     "<b>Here is a link: <a href='${firstLink}'>First</a></b>" +
                     "<p>Here is another link: <a href='${secondLink}'>Second</a></b>" +
                     "</html>".toString())
             1 * get(firstLink) >> new Pair(200, "<html></html>".toString())
             1 * get(secondLink) >> new Pair(200, "<html></html>".toString())
-        }))
+        })
         then:
         new Page(200, "/", [
                 Page.leaf(200, firstLink),
@@ -64,7 +64,7 @@ class SpidyTest extends Specification {
         def firstFollowUpLink = "/followup1.com"
 
         when:
-        def page = SpidyKt.crawl(root, Mock(WebConnector) {
+        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html><a href='${firstLink}'>First</a></html>".toString())
             1 * get(firstLink) >> new Pair(200, "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>".toString())
             1 * get(firstFollowUpLink) >> new Pair(200, "<html></html>".toString())
@@ -89,7 +89,7 @@ class SpidyTest extends Specification {
         def secondFollowUpLink2 = "/followup2-2.com"
 
         when:
-        def page = SpidyKt.crawl(root, Mock(WebConnector) {
+        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html>" +
                     "<a href='${firstLink}'>Test 1</a>" +
                     "<a href='${secondLink}'>Test 2</a>" +
@@ -125,7 +125,7 @@ class SpidyTest extends Specification {
 
         when:
 
-        def page = SpidyKt.crawl(root, Mock(WebConnector) {
+        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html>" +
                     "<a href='${firstLink}'>First</a>" +
                     "<a href='${secondLink}'>Second</a>" +
@@ -150,7 +150,7 @@ class SpidyTest extends Specification {
         def secondLink = "/forbidden"
         def thirdLink = "/moved-permanently"
         when:
-        def page = SpidyKt.crawl(root, Mock(WebConnector) {
+        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html>" +
                     "<a href='${firstLink}'>Not found</a>" +
                     "<a href='${secondLink}'>Forbidden</a>" +
@@ -175,7 +175,7 @@ class SpidyTest extends Specification {
         def notFound = "/not-found"
         def other = "/other"
         when:
-        def page = SpidyKt.crawl(root, Mock(WebConnector) {
+        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html>Click <a href='${notFound}'>here</a></html>".toString())
             1 * get(notFound) >> new Pair(404, "<html>Not found - go to <a href='${other}'>other</a></html>".toString())
             1 * get(other) >> new Pair(200, "<html></html>".toString())
@@ -192,7 +192,7 @@ class SpidyTest extends Specification {
         given:
         def root = "root.com"
         when:
-        def page = SpidyKt.crawl(root, Mock(WebConnector) {
+        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html><a href='/'>Back to root!</a></html>".toString())
         })
 
@@ -208,7 +208,7 @@ class SpidyTest extends Specification {
         def firstLink = "/test1.com"
         def firstFollowUpLink = "/followup1.com"
         when:
-        def page = SpidyKt.crawl(root, Mock(WebConnector) {
+        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html><a href='${firstLink}'>Test 1</a></html>".toString())
             1 * get(firstLink) >> new Pair(200, "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>".toString())
             1 * get(firstFollowUpLink) >> new Pair(200, "<html><a href='/'>Follow-up 1</a></html>".toString())
@@ -228,7 +228,7 @@ class SpidyTest extends Specification {
         given:
         def root = "example.com"
         when:
-        def page = SpidyKt.crawl(root, new WebConnectorImpl(root))
+        def page = SpidyKt.crawl(root, false, new WebConnectorImpl(root))
         then:
         new Page(200, "/", [], false) == page
     }

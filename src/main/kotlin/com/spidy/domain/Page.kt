@@ -1,7 +1,7 @@
 package com.spidy.domain
 
 /**
- * Data class representing a single HTTP page and a recursive links of its sub-pages.
+ * Data class representing a single HTTP page and a recursive parse of its sub-pages.
  */
 data class Page(
     val status : Int,
@@ -12,7 +12,7 @@ data class Page(
     companion object {
 
         /**
-         * @return Simple page without any follow-up links.
+         * @return Simple page without any follow-up parse.
          */
         @JvmStatic
         fun leaf(status: Int, url: String) = Page(status = status, url = url)

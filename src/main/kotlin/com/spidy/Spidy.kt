@@ -1,10 +1,28 @@
 package com.spidy
 
+import com.spidy.service.ConcurrentLinksNavigator
+import com.spidy.service.SequentialLinksNavigator
 import com.spidy.domain.Page
 import com.spidy.service.*
+import java.lang.IllegalArgumentException
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.system.measureTimeMillis
 
-fun main() {
-    println("bbc.co.uk".crawl())
+fun main(args : Array<String>) {
+    if(args.isEmpty()) {
+        throw IllegalArgumentException("Please provide website top-level domain as first argument")
+    }
+
+    val domain = args[0]
+    val concurrent = if(args.size >= 2) args[1].toBoolean() else false
+
+    println("Crawling $domain ${if (concurrent) "concurrently" else "sequentially"}")
+
+    val timeTaken = measureTimeMillis {
+        println(domain.crawl(concurrent))
+    }
+
+    println("Took ${timeTaken}ms to complete")
 }
 
 /**
@@ -13,13 +31,15 @@ fun main() {
  *
  * @return Root page outlining the tree-structure path taken by the crawler and each HTTP status code.
  */
-fun String.crawl(connector: WebConnector = WebConnectorImpl(this)) : Page {
+fun String.crawl(concurrent : Boolean = true,
+                 connector: WebConnector = WebConnectorImpl(this)) : Page {
 
-    val linkNavigator : LinkNavigator = LinkNavigatorImpl()
-    val linkFilter : LinkFilter = SubdomainFilter(this)
-    val linkNormalizer : LinkNormalizer = LinkNormalizerImpl()
+    val linkParser = LinkParserImpl()
+    val linkFilter = SubdomainFilter(this)
+    val linkNormalizer = LinkNormalizerImpl()
+    val linkNavigator = if(concurrent) ConcurrentLinksNavigator() else SequentialLinksNavigator()
 
-    val linksVisited : MutableSet<String> = mutableSetOf()
+    val linksVisited = ConcurrentHashMap.newKeySet<String>()
 
     fun crawl(url: String) : Page =
         if(linksVisited.add(url)) {
@@ -27,15 +47,16 @@ fun String.crawl(connector: WebConnector = WebConnectorImpl(this)) : Page {
 
             val (status : Int, body : String) = connector.get(url)
 
-            val links = linkNavigator.links(body)
+            val links : List<String> = linkParser.parse(body)
                 .filter { linkFilter(it) }
                 .map { linkNormalizer(it) }
-                .map { crawl(it) }
+
+            val subpages = linkNavigator.navigate(links, ::crawl)
 
             Page(
                 url = url,
                 status = status,
-                links = links
+                links = subpages
             )
         } else {
             // link was already visited - cyclic dependency

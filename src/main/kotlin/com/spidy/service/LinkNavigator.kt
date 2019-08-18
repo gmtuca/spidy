@@ -1,23 +1,49 @@
 package com.spidy.service
 
-import org.jsoup.Jsoup
+import com.spidy.domain.Page
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
-interface LinkNavigator {
-    fun links(html : String) : List<String>
+/**
+ * Interface to be implemented by classes in charge of iterating through a list of links (as Strings), returning
+ * a list of sub-pages by recursively following such links.
+ */
+interface LinksNavigator {
+    fun navigate(links : List<String>, navigationFn : (String) -> Page) : List<Page>
 }
 
 /**
- * Class in charge of parsing html input and returning the list of {code}<a href="...">{code} links contained in the
- * given page.
- * If the input is non-html, an empty list is returned
+ * Sequentially iterate through links, on a single thread
  */
-class LinkNavigatorImpl: LinkNavigator {
-    override fun links(html: String): List<String> =
-        try {
-            Jsoup.parse(html)
-                .select("a[href]")
-                .map { it.attr("href") }
-        } catch (e: Exception) {
-            emptyList()
+class SequentialLinksNavigator : LinksNavigator {
+    override fun navigate(links: List<String>, navigationFn: (String) -> Page) = links.map(navigationFn)
+}
+
+/**
+ * Concurrently iterate through links, assigning 'threadsPerLink' threads per link.
+ * Sub-pages of the given links are joined at the end, to provide a complete Page object.
+ */
+class ConcurrentLinksNavigator : LinksNavigator {
+
+    private val threadsPerLink = 0.5
+
+    override fun navigate(links: List<String>, navigationFn : (String) -> Page): List<Page> {
+
+        if(links.isEmpty()) {
+            return emptyList()
         }
+
+        val callableSubpages = links.map { Callable { navigationFn(it) } }
+
+        val executorService = Executors.newFixedThreadPool((links.size * threadsPerLink).toInt() + 1)
+
+        val subpages = executorService.invokeAll(callableSubpages)
+                                      .map { it.get() }
+
+        executorService.shutdown()
+        executorService.awaitTermination(5, TimeUnit.SECONDS)
+
+        return subpages
+    }
 }

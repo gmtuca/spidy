@@ -1,6 +1,7 @@
 package com.spidy.service
 
 import io.github.rybalkinsd.kohttp.dsl.httpGet
+import java.util.concurrent.atomic.AtomicInteger
 
 typealias HttpResponse = Pair<Int, String>
 
@@ -15,23 +16,29 @@ interface WebConnector {
  */
 class WebConnectorImpl(private val domain : String) : WebConnector {
 
-    var i = 0
+    val i = AtomicInteger()
 
     /**
      * @return pair containing HTTP response status code and body in string format, respectively
      */
     override fun get(url: String) : HttpResponse {
-        val res = httpGet {
-            host = domain
-            path = url
+        val httpResp = try {
+            val res = httpGet {
+                host = domain
+                path = url
 
-            header {
-                "USER_AGENT" to "Mozilla/5.0"
+                header {
+                    "USER_AGENT" to "Mozilla/5.0"
+                }
             }
+
+            HttpResponse(res.code(), res.body()!!.string())
+        } catch (e: Exception) {
+            HttpResponse(-1, e.message ?: "")
         }
 
-        println("${i++}: ${res.code()} $url")
+        println("${i.getAndIncrement()}: ${httpResp.first} $url")
 
-        return HttpResponse(res.code(), res.body()!!.string())
+        return httpResp
     }
 }
