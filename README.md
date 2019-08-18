@@ -60,6 +60,56 @@ Prints the following:
 48: 200 /tv/s4c
 49: 200 /iplayer/categories/arts/featured
 50: 200 /iplayer/categories/cbbc/featured
+51: 200 /iplayer/categories/cbeebies/featured
+52: 200 /iplayer/categories/comedy/featured
+53: 200 /iplayer/categories/documentaries/featured
+54: 200 /iplayer/categories/drama-and-soaps/featured
+55: 200 /iplayer/categories/entertainment/featured
+56: 200 /iplayer/categories/films/featured
+57: 200 /iplayer/categories/food/featured
+58: 200 /iplayer/categories/history/featured
+59: 200 /iplayer/categories/lifestyle/featured
+60: 200 /iplayer/categories/music/featured
+61: 200 /iplayer/categories/news/featured
+62: 200 /iplayer/categories/science-and-nature/featured
+63: 200 /iplayer/categories/sport/featured
+64: 200 /iplayer/categories/archive/featured
+65: 200 /iplayer/categories/audio-described/featured
+66: 200 /iplayer/categories/signed/featured
+67: 200 /iplayer/categories/northern-ireland/featured
+68: 200 /iplayer/categories/scotland/featured
+69: 200 /iplayer/categories/wales/featured
+70: 200 /iplayer/a-z/a
+71: 200 /iplayer/guide
+72: 200 /iplayer/watching
+73: 200 /iplayer/added
+74: 200 /iplayer/recommendations
+75: 200 /iplayer/guidance
+76: 200 /iplayer/help
+77: 404 //www.bbc.co.uk/iplayer
+78: 200 /usingthebbc/terms
+79: 200 /usingthebbc/
+80: 200 /usingthebbc/privacy/
+81: 200 /usingthebbc/privacy/what-are-you-doing-with-my-data/
+82: 200 /usingthebbc/privacy/privacy-promise/
+83: 200 /usingthebbc/privacy/keeping-my-children-safe-online/
+84: 200 /usingthebbc/cookies/
+85: 200 /usingthebbc/cookies/what-do-i-need-to-know-about-cookies/
+86: 200 /usingthebbc/cookies/how-can-i-change-my-bbc-cookie-settings/
+87: 200 /usingthebbc/account/
+88: 200 /usingthebbc/account/what-is-a-bbc-account/
+89: 200 /usingthebbc/account/adding-things-on-the-bbc/
+90: 200 /usingthebbc/account/how-is-the-bbc-personalised-to-me/
+91: 200 /usingthebbc/terms/
+92: 200 /usingthebbc/terms/do-i-need-a-tv-licence/
+93: 200 /usingthebbc/terms/what-are-the-rules-for-commenting/
+94: 200 /usingthebbc/terms/can-i-use-bbc-content/
+95: 200 /usingthebbc/terms/can-i-use-bbc-content-for-my-business/
+96: 200 /usingthebbc/terms/screening-the-bbc-proms/
+97: 200 /usingthebbc/terms/screening-the-bbc-proms/cy/
+98: 200 /newyddion
+99: 200 /cymrufyw
+100: 200 /cymrufyw/cylchgrawn
 ```
 
-...
+... and much more
