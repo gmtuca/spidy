@@ -4,7 +4,7 @@ import com.spidy.domain.Page
 import com.spidy.service.*
 
 fun main() {
-    println("monzo.com".crawl())
+    println("google.com".crawl())
 }
 
 /**
