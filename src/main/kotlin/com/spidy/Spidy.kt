@@ -1,48 +1,47 @@
 package com.spidy
 
-import com.spidy.domain.LinkFilter
 import com.spidy.domain.Page
-import com.spidy.domain.SubdomainFilter
-import com.spidy.domain.VisitAllFilter
-import com.spidy.service.LinkNavigator
-import com.spidy.service.LinkNavigatorImpl
-import com.spidy.service.WebConnector
-import com.spidy.service.WebConnectorImpl
+import com.spidy.service.*
 
 fun main() {
-    println(WebConnectorImpl().get("monzo.com"))
-    //println(Spidy() crawl "https://en.wikipedia.org")
+    println("monzo.com".crawl())
 }
 
-class Spidy(private val connector: WebConnector = WebConnectorImpl(),
-            private val withinDomain: Boolean = true) {
+/**
+ * Recursively crawls the given domain, following any link under HTML <a href="..."> tag withing the domain.
+ * The same link will not be visited more than once to avoid cyclic dependency.
+ *
+ * @return Root page outlining the tree-structure path taken by the crawler and each HTTP status code.
+ */
+fun String.crawl(connector: WebConnector = WebConnectorImpl(this)) : Page {
 
-    private val linkNavigator : LinkNavigator = LinkNavigatorImpl()
+    val linkNavigator : LinkNavigator = LinkNavigatorImpl()
+    val linkFilter : LinkFilter = SubdomainFilter(this)
+    val linkNormalizer : LinkNormalizer = LinkNormalizerImpl()
 
-    infix fun crawl(url: String) : Page {
-        val linkFilter : LinkFilter =
-            if (withinDomain) SubdomainFilter(url)
-            else VisitAllFilter()
+    val linksVisited : MutableSet<String> = mutableSetOf()
 
-        return crawl(url, linkFilter, mutableSetOf())
-    }
+    fun crawl(url: String) : Page =
+        if(linksVisited.add(url)) {
+            //link has not been visited, so visit it!
 
-    private fun crawl(url: String,
-                      linkFilter: LinkFilter,
-                      linksVisited : MutableSet<String>) : Page =
-        if(!linksVisited.add(url)) {
-            Page(url = url, status = 0, cyclic = true)
-        } else {
             val (status : Int, body : String) = connector.get(url)
 
             val links = linkNavigator.links(body)
                 .filter { linkFilter(it) }
-                .map { crawl(it, linkFilter, linksVisited) }
+                .map { linkNormalizer(it) }
+                .map { crawl(it) }
 
             Page(
                 url = url,
                 status = status,
                 links = links
             )
+        } else {
+            // link was already visited - cyclic dependency
+            Page(url = url, status = 0, cyclic = true)
         }
+
+    //start by visiting root of the domain
+    return crawl("/")
 }
