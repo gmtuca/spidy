@@ -10,9 +10,9 @@ class SpidyTest extends Specification {
 
     def "Page with no links"() {
         given:
-        def root = "root.com"
+        def domain = "domain.com"
         when:
-        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
+        def page = SpidyKt.crawl(domain, "/", false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html></html>")
         })
         then:
@@ -21,11 +21,11 @@ class SpidyTest extends Specification {
 
     def "Page with one link, depth 1"() {
         given:
-        def root = "root.com"
+        def domain = "domain.com"
         def firstLink = "/first.html"
 
         when:
-        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
+        def page = SpidyKt.crawl(domain, "/", false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html><a href='${firstLink}'>First</a></html>".toString())
             1 * get(firstLink) >> new Pair(200, "<html></html>".toString())
         })
@@ -35,14 +35,31 @@ class SpidyTest extends Specification {
         ], false) == page
     }
 
-    def "Page with two links, depth 1"() {
+    def "Page with one link, depth 1, starting from /first.html"() {
         given:
-        def root = "root.com"
+        def domain = "domain.com"
         def firstLink = "/first.html"
         def secondLink = "/second.html"
 
         when:
-        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
+        def page = SpidyKt.crawl(domain, firstLink, false, Mock(WebConnector) {
+            1 * get(firstLink) >> new Pair(200, "<html><a href='${secondLink}'>First</a></html>".toString())
+            1 * get(secondLink) >> new Pair(200, "<html></html>".toString())
+        })
+        then:
+        new Page(200, firstLink, [
+                Page.leaf(200, secondLink)
+        ], false) == page
+    }
+
+    def "Page with two links, depth 1"() {
+        given:
+        def domain = "domain.com"
+        def firstLink = "/first.html"
+        def secondLink = "/second.html"
+
+        when:
+        def page = SpidyKt.crawl(domain, "/", false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html>" +
                     "<b>Here is a link: <a href='${firstLink}'>First</a></b>" +
                     "<p>Here is another link: <a href='${secondLink}'>Second</a></b>" +
@@ -59,12 +76,12 @@ class SpidyTest extends Specification {
 
     def "Page with one link, depth 2"() {
         given:
-        def root = "root.com"
+        def domain = "domain.com"
         def firstLink = "/first.html"
         def firstFollowUpLink = "/followup1.com"
 
         when:
-        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
+        def page = SpidyKt.crawl(domain, "/", false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html><a href='${firstLink}'>First</a></html>".toString())
             1 * get(firstLink) >> new Pair(200, "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>".toString())
             1 * get(firstFollowUpLink) >> new Pair(200, "<html></html>".toString())
@@ -79,7 +96,7 @@ class SpidyTest extends Specification {
 
     def "Page with 2 links, depth 3"() {
         given:
-        def root = "root.com"
+        def domain = "domain.com"
 
         def firstLink = "/test1.com"
         def firstFollowUpLink = "/followup1.com"
@@ -89,7 +106,7 @@ class SpidyTest extends Specification {
         def secondFollowUpLink2 = "/followup2-2.com"
 
         when:
-        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
+        def page = SpidyKt.crawl(domain, "/", false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html>" +
                     "<a href='${firstLink}'>Test 1</a>" +
                     "<a href='${secondLink}'>Test 2</a>" +
@@ -118,14 +135,14 @@ class SpidyTest extends Specification {
 
     def "Page with three links, depth 1, ignoring outside domain filter"() {
         given:
-        def root = "root.com"
+        def domain = "domain.com"
         def firstLink = "/first"
-        def secondLink = "https://root.com/second"
+        def secondLink = "https://domain.com/second"
         def thirdLink = "https://google.com"
 
         when:
 
-        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
+        def page = SpidyKt.crawl(domain, "/", false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html>" +
                     "<a href='${firstLink}'>First</a>" +
                     "<a href='${secondLink}'>Second</a>" +
@@ -145,12 +162,12 @@ class SpidyTest extends Specification {
 
     def "Page with three links, depth 1, different status codes"() {
         given:
-        def root = "example.com"
+        def domain = "example.com"
         def firstLink = "/not-found"
         def secondLink = "/forbidden"
         def thirdLink = "/moved-permanently"
         when:
-        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
+        def page = SpidyKt.crawl(domain, "/", false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html>" +
                     "<a href='${firstLink}'>Not found</a>" +
                     "<a href='${secondLink}'>Forbidden</a>" +
@@ -171,11 +188,11 @@ class SpidyTest extends Specification {
 
     def "Page with one link, depth 1, follows non-2xx status codes"() {
         given:
-        def root = "root.com"
+        def domain = "domain.com"
         def notFound = "/not-found"
         def other = "/other"
         when:
-        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
+        def page = SpidyKt.crawl(domain, "/", false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html>Click <a href='${notFound}'>here</a></html>".toString())
             1 * get(notFound) >> new Pair(404, "<html>Not found - go to <a href='${other}'>other</a></html>".toString())
             1 * get(other) >> new Pair(200, "<html></html>".toString())
@@ -190,10 +207,10 @@ class SpidyTest extends Specification {
 
     def "Page with one link, cyclic dependency"() {
         given:
-        def root = "root.com"
+        def domain = "domain.com"
         when:
-        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
-            1 * get("/") >> new Pair(200, "<html><a href='/'>Back to root!</a></html>".toString())
+        def page = SpidyKt.crawl(domain, "/", false, Mock(WebConnector) {
+            1 * get("/") >> new Pair(200, "<html><a href='/'>Back to domain!</a></html>".toString())
         })
 
         then:
@@ -204,11 +221,11 @@ class SpidyTest extends Specification {
 
     def "Page with one link, depth 4, cyclic dependency"() {
         given:
-        def root = "root.com"
+        def domain = "domain.com"
         def firstLink = "/test1.com"
         def firstFollowUpLink = "/followup1.com"
         when:
-        def page = SpidyKt.crawl(root, false, Mock(WebConnector) {
+        def page = SpidyKt.crawl(domain, "/", false, Mock(WebConnector) {
             1 * get("/") >> new Pair(200, "<html><a href='${firstLink}'>Test 1</a></html>".toString())
             1 * get(firstLink) >> new Pair(200, "<html><a href='${firstFollowUpLink}'>Follow-up 1</a></html>".toString())
             1 * get(firstFollowUpLink) >> new Pair(200, "<html><a href='/'>Follow-up 1</a></html>".toString())
@@ -226,9 +243,9 @@ class SpidyTest extends Specification {
 
     def "Crawl live page with no links"() {
         given:
-        def root = "example.com"
+        def domain = "example.com"
         when:
-        def page = SpidyKt.crawl(root, false, new WebConnectorImpl(root))
+        def page = SpidyKt.crawl(domain, "/", false, new WebConnectorImpl(domain))
         then:
         new Page(200, "/", [], false) == page
     }

@@ -6,6 +6,7 @@ import com.spidy.domain.Page
 import com.spidy.service.*
 import java.lang.IllegalArgumentException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.measureTimeMillis
 
 /**
@@ -23,7 +24,7 @@ fun main(args : Array<String>) {
     println("Crawling $domain ${if (concurrent) "concurrently" else "sequentially"}")
 
     val timeTaken = measureTimeMillis {
-        println(domain.crawl(concurrent))
+        println(domain.crawl(concurrent = concurrent))
     }
 
     println("Took ${timeTaken}ms to complete")
@@ -35,7 +36,8 @@ fun main(args : Array<String>) {
  *
  * @return Root page outlining the tree-structure path taken by the crawler and each HTTP status code.
  */
-fun String.crawl(concurrent : Boolean = true,
+fun String.crawl(path : String = "/",
+                 concurrent : Boolean = true,
                  connector: WebConnector = WebConnectorImpl(this)) : Page {
 
     val linkParser = LinkParserImpl()
@@ -44,29 +46,32 @@ fun String.crawl(concurrent : Boolean = true,
     val linkNavigator = if(concurrent) ConcurrentLinksNavigator() else SequentialLinksNavigator()
 
     val linksVisited = ConcurrentHashMap.newKeySet<String>()
+    val totalVisited = AtomicInteger()
 
-    fun crawl(url: String) : Page =
-        if(linksVisited.add(url)) {
+    fun crawl(depth : Int = 0, path: String) : Page =
+        if(linksVisited.add(path)) {
             //link has not been visited, so visit it!
 
-            val (status : Int, body : String) = connector.get(url)
+            val (status : Int, body : String) = connector.get(path)
+
+            println("${totalVisited.getAndIncrement()}: ${" ".repeat(depth)} $status $path")
 
             val links : List<String> = linkParser.parse(body)
                 .filter { linkFilter(it) }
                 .map { linkNormalizer(it) }
 
-            val subpages = linkNavigator.navigate(links, ::crawl)
+            val subpages = linkNavigator.navigate(links) { crawl(depth+1, it) }
 
             Page(
-                url = url,
+                url = path,
                 status = status,
-                links = subpages
+                subpages = subpages
             )
         } else {
             // link was already visited - cyclic dependency
-            Page(url = url, status = 0, cyclic = true)
+            Page(url = path, status = 0, cyclic = true)
         }
 
     //start by visiting root of the domain
-    return crawl("/")
+    return crawl(0, path)
 }

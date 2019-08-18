@@ -6,7 +6,7 @@ package com.spidy.domain
 data class Page(
     val status : Int,
     val url : String,
-    val links : List<Page> = emptyList(),
+    val subpages : List<Page> = emptyList(),
     val cyclic : Boolean = false) {
 
     companion object {

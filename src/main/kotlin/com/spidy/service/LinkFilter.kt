@@ -22,6 +22,6 @@ class SubdomainFilter(val domain: String) : LinkFilter {
         }
 
         return url.removePrefix(prefix)
-            .startsWith(domain)
+                  .startsWith(domain)
     }
 }

@@ -6,23 +6,23 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
- * Interface to be implemented by classes in charge of iterating through a list of links (as Strings), returning
- * a list of sub-pages by recursively following such links.
+ * Interface to be implemented by classes in charge of iterating through a list of subpages (as Strings), returning
+ * a list of sub-pages by recursively following such subpages.
  */
 interface LinksNavigator {
     fun navigate(links : List<String>, navigationFn : (String) -> Page) : List<Page>
 }
 
 /**
- * Sequentially iterate through links, on a single thread
+ * Sequentially iterate through subpages, on a single thread
  */
 class SequentialLinksNavigator : LinksNavigator {
     override fun navigate(links: List<String>, navigationFn: (String) -> Page) = links.map(navigationFn)
 }
 
 /**
- * Concurrently iterate through links, assigning 'threadsPerLink' threads per link.
- * Sub-pages of the given links are joined at the end, to provide a complete Page object.
+ * Concurrently iterate through subpages, assigning 'threadsPerLink' threads per link.
+ * Sub-pages of the given subpages are joined at the end, to provide a complete Page object.
  */
 class ConcurrentLinksNavigator : LinksNavigator {
 
