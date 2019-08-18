@@ -8,6 +8,10 @@ import java.lang.IllegalArgumentException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.system.measureTimeMillis
 
+/**
+ * args[0] (mandatory) - top-level domain to crawl
+ * args[1] (optional) - boolean representing whether to crawl concurrently (true) or sequentially (false)
+ */
 fun main(args : Array<String>) {
     if(args.isEmpty()) {
         throw IllegalArgumentException("Please provide website top-level domain as first argument")
