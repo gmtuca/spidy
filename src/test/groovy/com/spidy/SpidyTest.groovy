@@ -2,6 +2,7 @@ package com.spidy
 
 import com.spidy.domain.Page
 import com.spidy.service.WebConnector
+import com.spidy.service.WebConnectorImpl
 import kotlin.Pair
 import spock.lang.Specification
 
@@ -221,6 +222,15 @@ class SpidyTest extends Specification {
                         ], false)
                 ], false)
         ], false) == page
+    }
+
+    def "Crawl live page with no links"() {
+        given:
+        def root = "example.com"
+        when:
+        def page = SpidyKt.crawl(root, new WebConnectorImpl(root))
+        then:
+        new Page(200, "/", [], false) == page
     }
 
 }
